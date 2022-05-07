@@ -13,7 +13,7 @@ def _getPathsFilter (path: pathlib.PurePath, pattern: Pattern) -> bool:
    return pattern.match(pathStr)
 
 
-def getPaths(dir: str, regEx: str) -> list[pathlib.Path]:
+def getPaths(dir: str, regEx: str) -> list: #[pathlib.Path]:
 
    allFiles = []
    pattern = re.compile(regEx, re.IGNORECASE | re.DOTALL)
@@ -42,5 +42,8 @@ def getHash(path: pathlib.PurePath) -> str:
          m.update(data)
 
    return m.hexdigest()
+
+def getCwd() -> pathlib.Path:
+   return pathlib.Path(os.getcwd())
 
 
