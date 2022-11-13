@@ -2,7 +2,7 @@ import glob as glob
 import pathlib as pathlib
 import re
 from re import Pattern
-from ks.Stream import Stream
+from PythonLib.Stream import Stream
 import os
 import hashlib
 
