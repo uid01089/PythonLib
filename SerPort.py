@@ -22,6 +22,9 @@ class SerPort:
     def start(self) -> None:
         raise NotImplementedError
 
+    def clear(self) -> None:
+        raise NotImplementedError
+
 
 class SerPortDummy(SerPort):
     def __init__(self, data: bytes) -> None:
@@ -42,6 +45,9 @@ class SerPortDummy(SerPort):
 
     def start(self) -> None:
         pass
+
+    def clear(self) -> None:
+        self.buffer = b''
 
 
 class SerPortHw(SerPortDummy):
@@ -76,3 +82,7 @@ class SerPortHw(SerPortDummy):
             logger.debug("SerPort read %s", self.buffer)
 
         return self.buffer
+
+    def clear(self) -> None:
+        self.buffer = b''
+        self.serial.read_all()
