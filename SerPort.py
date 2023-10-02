@@ -1,28 +1,56 @@
+# This class provides an interface for serial port communication, with options for both hardware and dummy (testing) implementations.
 import logging
 import serial
 
 logger = logging.getLogger('PythonLib.SerPort')
 
-# https://pyserial.readthedocs.io/en/latest/shortintro.html
+# See https://pyserial.readthedocs.io/en/latest/shortintro.html
 
 
 class SerPort:
     def read(self) -> bytes:
+        """
+        Read data from the serial port.
+
+        Returns:
+            bytes: The data read from the port.
+        """
         raise NotImplementedError
 
     def write(self, data: bytes) -> None:
+        """
+        Write data to the serial port.
+
+        Args:
+            data (bytes): The data to be written to the port.
+        """
         raise NotImplementedError
 
     def delete(self, bytesToDelete: bytes) -> None:
+        """
+        Delete specific bytes from the buffer.
+
+        Args:
+            bytesToDelete (bytes): The bytes to be deleted from the buffer.
+        """
         raise NotImplementedError
 
     def setup(self) -> None:
+        """
+        Set up the serial port connection (specific to hardware implementation).
+        """
         raise NotImplementedError
 
     def start(self) -> None:
+        """
+        Start the serial port connection (specific to hardware implementation).
+        """
         raise NotImplementedError
 
     def clear(self) -> None:
+        """
+        Clear the serial port buffer.
+        """
         raise NotImplementedError
 
 
