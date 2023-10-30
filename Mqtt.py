@@ -96,16 +96,35 @@ class Mqtt:
         Publish data to an MQTT topic.
 
         Args:
-            topic (str): The topic to publish to.
+            topic (str): The topic to publish to (rootTopic/topic).
             payload (str): The payload to publish.
         """
         topic = self.rootTopic + "/" + re.sub(r'\s+', '_', topic)
+        self.publishIndependentTopic(topic, payload)
 
+    def publishIndependentTopic(self, topic: str, payload: str) -> None:
+        """
+        Publish data to an MQTT topic.
+
+        Args:
+            topic (str): The topic to publish to.
+            payload (str): The payload to publish.
+        """
         logger.debug(f'Publish: {topic} : {payload}')
-
         self.mqttClient.publish(topic, payload)
 
     def publishOnChange(self, topic: str, payload: str) -> None:
+        """
+        Publish data to an MQTT topic only if the payload has changed.
+
+        Args:
+            topic (str): The topic to publish to (rootTopic/topic).
+            payload (str): The payload to publish.
+        """
+        topic = self.rootTopic + "/" + topic
+        self.publishOnChangeIndependentTopic(topic, payload)
+
+    def publishOnChangeIndependentTopic(self, topic: str, payload: str) -> None:
         """
         Publish data to an MQTT topic only if the payload has changed.
 
@@ -115,7 +134,7 @@ class Mqtt:
         """
         if self.onChangeDict.get(topic) != payload:
             self.onChangeDict[topic] = payload
-            self.publish(topic, payload)
+            self.publishIndependentTopic(topic, payload)
 
     def subscribe(self, topic: str, callback: Callable[[str], None]) -> None:
         """
@@ -126,16 +145,14 @@ class Mqtt:
             callback (Callable[[str], None]): A callback function that accepts the message payload.
         """
         topic = self.rootTopic + "/" + topic
-        self.topicCallbackDict[topic] = callback
-
-        self.mqttClient.subscribe(topic, qos=1)
+        self.subscribeIndependentTopic(topic, callback)
 
     def subscribeIndependentTopic(self, topic: str, callback: Callable[[str], None]) -> None:
         """
         Subscribe to an MQTT topic and specify a callback function to handle incoming messages.
 
         Args:
-            topic (str): The topic to subscribe to 
+            topic (str): The topic to subscribe to
             callback (Callable[[str], None]): A callback function that accepts the message payload.
         """
 
