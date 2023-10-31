@@ -53,6 +53,11 @@ class SerPort:
         """
         raise NotImplementedError
 
+    def getBufferSize(self) -> int:
+        """
+        Get size of buffer.
+        """
+        raise NotImplementedError
 
 class SerPortDummy(SerPort):
     def __init__(self, data: bytes) -> None:
@@ -76,6 +81,9 @@ class SerPortDummy(SerPort):
 
     def clear(self) -> None:
         self.buffer = b''
+
+    def getBufferSize(self) -> int:
+        return len(self.buffer)
 
 
 class SerPortHw(SerPortDummy):
