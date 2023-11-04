@@ -36,6 +36,7 @@ class Task:
     isReloading():
         Returns the reloading status of the task
     """
+
     def __init__(self, startTimeMs: int, durationMs: int, callback: Callable[[None], None], reloading: bool) -> None:
         self.startTimeMs = startTimeMs
         self.durationMs = durationMs
@@ -87,6 +88,7 @@ class Scheduler:
     getTaskSize():
         Returns the number of tasks in the task list
     """
+
     def __init__(self) -> None:
         self.taskList = []
 
@@ -98,8 +100,11 @@ class Scheduler:
         for task in self.taskList:
             # https://arduino.stackexchange.com/questions/12587/how-can-i-handle-the-millis-rollover/12588#12588
             if self.__millis() - task.getStartTime() > task.getDuration():
-                # Call the function
-                task.getFct()()
+                try:
+                    # Call the function
+                    task.getFct()()
+                except BaseException:
+                    logging.exception('')
 
                 if task.isReloading():
                     task.setStartTime(self.__millis())

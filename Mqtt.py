@@ -6,6 +6,7 @@ import logging
 import queue
 from typing import Callable
 import paho.mqtt.client as mqtt
+from paho.mqtt.client import connack_string
 
 # https://github.com/eclipse/paho.mqtt.python
 # https://mntolia.com/mqtt-python-with-paho-mqtt-client/
@@ -28,8 +29,9 @@ class Mqtt:
         self.port = port
         self.mqttClient = mqttClient
         self.rootTopic = rootTopic
-        self.onChangeDict = dict()
-        self.topicCallbackDict = dict()
+        self.onChangeDict = {}
+        self.topicCallbackDict = {}
+        self.startWithTopicCallbackDict = {}
         self.queue = queue.Queue()
 
         self.__setup()
@@ -41,8 +43,8 @@ class Mqtt:
         Args:
             payload (str): The payload received when resetting MQTT data.
         """
-        self.onChangeDict = dict()
-        logger.info(f'MQTT resetted')
+        self.onChangeDict = {}
+        logger.info("MQTT resetted")
 
     def __on_message(self, client, userdata, message):
         """
@@ -65,19 +67,42 @@ class Mqtt:
             item = self.queue.get()
             topic = item[0]
             payload = item[1]
+
+            # Check if Callback with exact topic was registered
             callback = self.topicCallbackDict.get(topic)
             if callback:
-                callback(payload)
+                try:
+                    callback(payload)
+                except BaseException:
+                    logging.exception('_3_')
             else:
-                logger.error(f'Topic {topic} has no registered callback')
+                logger.debug("Topic %s has no registered callback", topic)
+
+            # Check if Callback was registered with topic as starter
+            for startWithTopic, startWithTopicCallback in self.startWithTopicCallbackDict.items():
+                if topic.startswith(startWithTopic):
+                    try:
+                        startWithTopicCallback(topic, payload)
+                    except BaseException:
+                        logging.exception('_2_')
+
+    def __on_connect(self, client, userdata, flags, rc) -> None:
+        logger.debug("on_connect: %s", connack_string(rc))
+
+    def __on_disconnect(self, client, userdata, rc) -> None:
+        logger.debug("on_disconnect %s %i", connack_string(rc), rc)
 
     def __setup(self) -> None:
         """
         Initialize the MQTT client and set up necessary configurations.
         """
-        self.onChangeDict = dict()
+        self.onChangeDict = {}
         self.mqttClient.connect(self.hostname, self.port)
         self.mqttClient.on_message = self.__on_message
+        self.mqttClient.on_connect = self.__on_connect
+        self.mqttClient.on_disconnect = self.__on_disconnect
+
+        self.mqttClient.enable_logger(logger)
 
         # Register a service API for MQTT to reset persistent data
         self.subscribe('mqtt/reset', self.__reset)
@@ -110,7 +135,7 @@ class Mqtt:
             topic (str): The topic to publish to.
             payload (str): The payload to publish.
         """
-        logger.debug(f'Publish: {topic} : {payload}')
+        logger.debug("Publish: %s : %s", topic, payload)
         self.mqttClient.publish(topic, payload)
 
     def publishOnChange(self, topic: str, payload: str) -> None:
@@ -157,5 +182,16 @@ class Mqtt:
         """
 
         self.topicCallbackDict[topic] = callback
-
         self.mqttClient.subscribe(topic, qos=1)
+
+    def subscribeStartWithTopic(self, topic: str, callback: Callable[[str, str], None]) -> None:
+        """
+        Subscribe to all MQTT topic starting with topic and specify a callback function to handle incoming messages.
+
+        Args:
+            topic (str): The beginning of topic to subscribe to
+            callback (Callable[[str,str], None]): A callback function that accepts the topic and the message payload.
+        """
+
+        self.startWithTopicCallbackDict[topic] = callback
+        self.mqttClient.subscribe(topic + "#", qos=1)
