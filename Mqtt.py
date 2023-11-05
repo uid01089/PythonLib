@@ -195,3 +195,15 @@ class Mqtt:
 
         self.startWithTopicCallbackDict[topic] = callback
         self.mqttClient.subscribe(topic + "#", qos=1)
+
+
+class MQTTHandler(logging.Handler):
+
+    def __init__(self, mqttClient: Mqtt, topic: str) -> None:
+        super().__init__()
+        self.mqtt = mqttClient
+        self.topic = topic
+
+    def emit(self, record):
+        log_message = self.format(record)
+        self.mqtt.publishIndependentTopic(self.topic, log_message)
