@@ -15,6 +15,9 @@ class Influx:
     def createDatabase(self) -> Influx:
         self.client.create_database(self.database)
 
+    def deleteDatabase(self) -> Influx:
+        self.client.drop_database(self.database)
+
     def write(self, measurement: str, fields: dict) -> Influx:
 
         json_body = [
