@@ -24,7 +24,7 @@ class Influx:
 
     def write(self, measurement: str, fields: dict) -> Influx:
 
-        if not fields:
+        if len(fields) != 0:
             json_body = [
                 {
                     "measurement": measurement,
