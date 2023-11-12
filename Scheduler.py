@@ -1,46 +1,59 @@
-
-from typing import Callable
-import time
+from typing import Callable, List
+from datetime import datetime, timedelta, time
 import logging
+import time as oldTime
 
 logger = logging.getLogger('Scheduler')
 
 
 class Task:
-    """
-    A class used to represent a Task.
+    def __init__(self, callback: Callable[[None], None]) -> None:
+        self.callback = callback
 
-    ...
+    def getFct(self) -> Callable[[None], None]:
+        """Returns the callback function of the task"""
+        return self.callback
 
-    Attributes
-    ----------
-    startTimeMs : int
-        a timestamp indicating when the task should start
-    durationMs : int
-        the duration of the task in milliseconds
-    callback : Callable[[None], None]
-        the function that is called when the task is executed
-    reloading : bool
-        a flag indicating whether the task should be reloaded after execution
 
-    Methods
-    -------
-    getStartTime():
-        Returns the start time of the task
-    setStartTime(startTimeMs: int):
-        Sets the start time of the task
-    getDuration():
-        Returns the duration of the task
-    getFct():
-        Returns the callback function of the task
-    isReloading():
-        Returns the reloading status of the task
-    """
+class AbsDateTask(Task):
+    def __init__(self, startDate: datetime, callback: Callable[[None], None], reloading: timedelta = None) -> None:
+        super().__init__(callback)
+        self.startDate = startDate
+        self.reloading = reloading
+
+    def getStartDate(self) -> datetime:
+        return self.startDate
+
+    def setStartDate(self, startDate: datetime) -> None:
+        self.startDate = startDate
+
+    def getReloading(self) -> timedelta:
+        return self.reloading
+
+
+class AbsTimeTask(Task):
+    def __init__(self, startTime: time, callback: Callable[[None], None], reloading: timedelta = None) -> None:
+        super().__init__(callback)
+        self.startTime = startTime
+        self.reloading = reloading
+
+    def getStartTime(self) -> time:
+        return self.startTime
+
+    def setStartTime(self, startTime: time) -> None:
+        self.startTime = startTime
+
+    def getReloading(self) -> timedelta:
+        return self.reloading
+
+
+class RelMsTask(Task):
+    """A class used to represent a Task."""
 
     def __init__(self, startTimeMs: int, durationMs: int, callback: Callable[[None], None], reloading: bool) -> None:
+        super().__init__(callback)
         self.startTimeMs = startTimeMs
         self.durationMs = durationMs
-        self.callback = callback
         self.reloading = reloading
 
     def getStartTime(self) -> int:
@@ -55,49 +68,24 @@ class Task:
         """Returns the duration of the task"""
         return self.durationMs
 
-    def getFct(self) -> Callable[[None], None]:
-        """Returns the callback function of the task"""
-        return self.callback
-
     def isReloading(self) -> bool:
         """Returns the reloading status of the task"""
         return self.reloading
 
 
 class Scheduler:
-    """
-    A class used to represent a Scheduler.
-
-    ...
-
-    Attributes
-    ----------
-    taskList : list
-        a list of tasks to be executed
-
-    Methods
-    -------
-    loop():
-        Executes tasks from the task list based on their start time and duration
-    oneShoot(callback: Callable[[None], None], timePeriodMs: int):
-        Adds a new non-reloading task to the task list
-    scheduleEach(callback: Callable[[None], None], timePeriodMs: int):
-        Adds a new reloading task to the task list
-    __millis():
-        Returns the current time in milliseconds
-    getTaskSize():
-        Returns the number of tasks in the task list
-    """
+    """A class used to represent a Scheduler."""
 
     def __init__(self) -> None:
-        self.taskList = []
+        self.relMsTaskList: List[RelMsTask] = []
+        self.absDateTaskList: List[AbsDateTask] = []
+        self.absTimeTaskList: List[AbsTimeTask] = []
 
-    def loop(self) -> None:
-        """Executes tasks from the task list based on their start time and duration"""
+    def __loopRelMsTaskList(self) -> None:
+        """Executes tasks from the relMsTaskList based on their start time and duration."""
+        deleteRelMsTaskList: List[RelMsTask] = []
 
-        taskForDelete = []
-
-        for task in self.taskList:
+        for task in self.relMsTaskList:
             # https://arduino.stackexchange.com/questions/12587/how-can-i-handle-the-millis-rollover/12588#12588
             if self.__millis() - task.getStartTime() > task.getDuration():
                 try:
@@ -110,25 +98,85 @@ class Scheduler:
                     task.setStartTime(self.__millis())
                 else:
                     # mark current task to delete
-                    taskForDelete.append(task)
+                    deleteRelMsTaskList.append(task)
 
-        for task in taskForDelete:
-            self.taskList.remove(task)
+        for task in deleteRelMsTaskList:
+            self.relMsTaskList.remove(task)
 
-        logger.debug("JobList size: %i", len(self.taskList))
+        logger.debug("JobList size: %i", len(self.relMsTaskList))
+
+    def __loopAbsDateTaskList(self) -> None:
+        """Executes tasks from the absDateTaskList based on their start date."""
+        deleteAbsDateTaskList: List[AbsDateTask] = []
+
+        for task in self.absDateTaskList:
+            if datetime.now() > task.getStartDate():
+                try:
+                    # Call the function
+                    task.getFct()()
+                except BaseException:
+                    logging.exception('')
+
+                if task.getReloading():
+                    task.setStartDate(task.getStartDate() + task.getReloading())
+                else:
+                    # mark current task to delete
+                    deleteAbsDateTaskList.append(task)
+
+        for task in deleteAbsDateTaskList:
+            self.absDateTaskList.remove(task)
+
+        logger.debug("JobList size: %i", len(self.absDateTaskList))
+
+    def __loopAbsTimeTaskList(self) -> None:
+        """Executes tasks from the absTimeTaskList based on their start time."""
+        deleteAbsTimeTaskList: List[AbsTimeTask] = []
+
+        for task in self.absTimeTaskList:
+            if datetime.now().time() > task.getStartTime():
+                try:
+                    # Call the function
+                    task.getFct()()
+                except BaseException:
+                    logging.exception('')
+
+                if task.getReloading():
+                    task.setStartTime((datetime.combine(datetime.today(), task.getStartTime()) + task.getReloading()).time())
+                else:
+                    # mark current task to delete
+                    deleteAbsTimeTaskList.append(task)
+
+        for task in deleteAbsTimeTaskList:
+            self.absDateTaskList.remove(task)
+
+        logger.debug("JobList size: %i", len(self.absDateTaskList))
+
+    def loop(self) -> None:
+        """Executes tasks from all task lists."""
+        self.__loopAbsDateTaskList()
+        self.__loopAbsTimeTaskList()
+        self.__loopRelMsTaskList()
 
     def oneShoot(self, callback: Callable[[None], None], timePeriodMs: int) -> None:
-        """Adds a new non-reloading task to the task list"""
-        self.taskList.append(Task(self.__millis(), timePeriodMs, callback, False))
+        """Adds a new non-reloading task to the task list."""
+        self.relMsTaskList.append(RelMsTask(self.__millis(), timePeriodMs, callback, False))
 
     def scheduleEach(self, callback: Callable[[None], None], timePeriodMs: int) -> None:
-        """Adds a new reloading task to the task list"""
-        self.taskList.append(Task(self.__millis(), timePeriodMs, callback, True))
+        """Adds a new reloading task to the task list."""
+        self.relMsTaskList.append(RelMsTask(self.__millis(), timePeriodMs, callback, True))
+
+    def scheduleAtTime(self, callback: Callable[[None], None], startTime: time, reloading: timedelta = None) -> None:
+        """Adds a new time-based task to the task list."""
+        self.absTimeTaskList.append(AbsTimeTask(startTime, callback, reloading))
+
+    def scheduleAtDate(self, callback: Callable[[None], None], startDate: datetime, reloading: timedelta = None) -> None:
+        """Adds a new date-based task to the task list."""
+        self.absDateTaskList.append(AbsDateTask(startDate, callback, reloading))
 
     def __millis(self) -> int:
-        """Returns the current time in milliseconds"""
-        return int(time.time() * 1000)
+        """Returns the current time in milliseconds."""
+        return int(oldTime.time() * 1000)
 
     def getTaskSize(self) -> int:
-        """Returns the number of tasks in the task list"""
-        return len(self.taskList)
+        """Returns the number of tasks in the task list."""
+        return len(self.relMsTaskList) + len(self.absDateTaskList) + len(self.absTimeTaskList)

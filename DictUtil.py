@@ -28,6 +28,9 @@ class DictUtil:
                 # If the value is a dictionary, add it and its corresponding path to the stack
                 if isinstance(value, dict):
                     stack.append((value, currentDic[1] + "/" + key))
+                elif isinstance(value, list):
+                    for ctr, listValue in enumerate(value):
+                        stack.append((listValue, currentDic[1] + "/" + key + "/" + str(ctr)))
                 else:
                     # If the value is not a dictionary, add a tuple containing the path to the key and the value to the list
                     listOfLines.append((currentDic[1] + "/" + key, value))
