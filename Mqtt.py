@@ -8,6 +8,8 @@ from typing import Callable
 import paho.mqtt.client as mqtt
 from paho.mqtt.client import connack_string
 
+from PythonLib.Scheduler import Scheduler
+
 # https://github.com/eclipse/paho.mqtt.python
 # https://mntolia.com/mqtt-python-with-paho-mqtt-client/
 
@@ -30,6 +32,7 @@ class Mqtt:
         self.mqttClient = mqttClient
         self.rootTopic = rootTopic
         self.onChangeDict = {}
+        self.onChangeDictStartTime = {}
         self.topicCallbackDict = {}
         self.startWithTopicCallbackDict = {}
         self.queue = queue.Queue()
@@ -44,6 +47,7 @@ class Mqtt:
             payload (str): The payload received when resetting MQTT data.
         """
         self.onChangeDict = {}
+        self.onChangeDictStartTime = {}
         logger.info("MQTT resetted")
 
     def __on_message(self, client, userdata, message):
@@ -97,6 +101,7 @@ class Mqtt:
         Initialize the MQTT client and set up necessary configurations.
         """
         self.onChangeDict = {}
+        self.onChangeDictStartTime = {}
         self.mqttClient.connect(self.hostname, self.port)
         self.mqttClient.on_message = self.__on_message
         self.mqttClient.on_connect = self.__on_connect
@@ -138,7 +143,7 @@ class Mqtt:
         logger.debug("Publish: %s : %s", topic, payload)
         self.mqttClient.publish(topic, payload)
 
-    def publishOnChange(self, topic: str, payload: str) -> None:
+    def publishOnChange(self, topic: str, payload: str, forceUpdateMs: int = 60000) -> None:
         """
         Publish data to an MQTT topic only if the payload has changed.
 
@@ -147,9 +152,9 @@ class Mqtt:
             payload (str): The payload to publish.
         """
         topic = self.rootTopic + "/" + topic
-        self.publishOnChangeIndependentTopic(topic, payload)
+        self.publishOnChangeIndependentTopic(topic, payload, forceUpdateMs)
 
-    def publishOnChangeIndependentTopic(self, topic: str, payload: str) -> None:
+    def publishOnChangeIndependentTopic(self, topic: str, payload: str, forceUpdateMs: int = 60000) -> None:
         """
         Publish data to an MQTT topic only if the payload has changed.
 
@@ -158,8 +163,17 @@ class Mqtt:
             payload (str): The payload to publish.
         """
         if self.onChangeDict.get(topic) != payload:
+            # Payload changed, publish
             self.onChangeDict[topic] = payload
+            self.onChangeDictStartTime[topic] = Scheduler.getMillis()
             self.publishIndependentTopic(topic, payload)
+        else:
+            # Payload not changed, but perhaps timeout is over
+            if Scheduler.getMillis() - self.onChangeDictStartTime.get(topic, 0) > forceUpdateMs:
+                # timeout is over
+                self.onChangeDict[topic] = payload
+                self.onChangeDictStartTime[topic] = Scheduler.getMillis()
+                self.publishIndependentTopic(topic, payload)
 
     def subscribe(self, topic: str, callback: Callable[[str], None]) -> None:
         """
@@ -183,6 +197,9 @@ class Mqtt:
 
         self.topicCallbackDict[topic] = callback
         self.mqttClient.subscribe(topic, qos=1)
+
+    def getSubscriptionCatalog(self) -> list[str]:
+        return list(self.topicCallbackDict.keys())
 
     def subscribeStartWithTopic(self, topic: str, callback: Callable[[str, str], None]) -> None:
         """

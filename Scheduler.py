@@ -87,7 +87,7 @@ class Scheduler:
 
         for task in self.relMsTaskList:
             # https://arduino.stackexchange.com/questions/12587/how-can-i-handle-the-millis-rollover/12588#12588
-            if self.__millis() - task.getStartTime() > task.getDuration():
+            if Scheduler.getMillis() - task.getStartTime() > task.getDuration():
                 try:
                     # Call the function
                     task.getFct()()
@@ -95,7 +95,7 @@ class Scheduler:
                     logging.exception('')
 
                 if task.isReloading():
-                    task.setStartTime(self.__millis())
+                    task.setStartTime(Scheduler.getMillis())
                 else:
                     # mark current task to delete
                     deleteRelMsTaskList.append(task)
@@ -159,11 +159,11 @@ class Scheduler:
 
     def oneShoot(self, callback: Callable[[None], None], timePeriodMs: int) -> None:
         """Adds a new non-reloading task to the task list."""
-        self.relMsTaskList.append(RelMsTask(self.__millis(), timePeriodMs, callback, False))
+        self.relMsTaskList.append(RelMsTask(Scheduler.getMillis(), timePeriodMs, callback, False))
 
     def scheduleEach(self, callback: Callable[[None], None], timePeriodMs: int) -> None:
         """Adds a new reloading task to the task list."""
-        self.relMsTaskList.append(RelMsTask(self.__millis(), timePeriodMs, callback, True))
+        self.relMsTaskList.append(RelMsTask(Scheduler.getMillis(), timePeriodMs, callback, True))
 
     def scheduleAtTime(self, callback: Callable[[None], None], startTime: time, reloading: timedelta = None) -> None:
         """Adds a new time-based task to the task list."""
@@ -173,7 +173,8 @@ class Scheduler:
         """Adds a new date-based task to the task list."""
         self.absDateTaskList.append(AbsDateTask(startDate, callback, reloading))
 
-    def __millis(self) -> int:
+    @staticmethod
+    def getMillis() -> int:
         """Returns the current time in milliseconds."""
         return int(oldTime.time() * 1000)
 
