@@ -11,7 +11,7 @@ logger = logging.getLogger('Influx')
 
 class Influx:
     def __init__(self, host: str, database: str) -> None:
-        self.client = InfluxDBClient(host='koserver.parents', port=8086, database="Mqtt2Influx")
+        self.client = InfluxDBClient(host=host, port=8086, database=database)
         self.database = database
         self.onChangeDict = {}
         self.onChangeDictStartTime = {}
