@@ -22,7 +22,7 @@ class Influx:
     def deleteDatabase(self) -> Influx:
         self.client.drop_database(self.database)
 
-    def write(self, measurement: str, fields: dict) -> Influx:
+    def write(self, measurement: str, fields: dict, retention_policy: str = None) -> Influx:
 
         if len(fields) != 0:
             json_body = [
@@ -34,11 +34,11 @@ class Influx:
                 }
             ]
 
-            self.client.write_points(json_body)
+            self.client.write_points(json_body, None, None, retention_policy)
 
         return self
 
-    def writeOnChange(self, measurement: str, fields: dict, forceUpdateMs: int = 60000) -> Influx:
+    def writeOnChange(self, measurement: str, fields: dict, forceUpdateMs: int = 60000, retention_policy: str = None) -> Influx:
         dictToWrite = {}
         for topic, payload in fields.items():
 
@@ -55,4 +55,4 @@ class Influx:
                     self.onChangeDictStartTime[topic] = Scheduler.getMillis()
                     dictToWrite[topic] = payload
 
-        return self.write(measurement, dictToWrite)
+        return self.write(measurement, dictToWrite, retention_policy)
