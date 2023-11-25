@@ -121,7 +121,7 @@ class Mqtt:
         """
         self.__dispatchMessages()
 
-    def publish(self, topic: str, payload: str) -> None:
+    def publish(self, topic: str, payload: str, qos: int = 0) -> None:
         """
         Publish data to an MQTT topic.
 
@@ -130,9 +130,9 @@ class Mqtt:
             payload (str): The payload to publish.
         """
         topic = self.rootTopic + "/" + re.sub(r'\s+', '_', topic)
-        self.publishIndependentTopic(topic, payload)
+        self.publishIndependentTopic(topic, payload, qos)
 
-    def publishIndependentTopic(self, topic: str, payload: str) -> None:
+    def publishIndependentTopic(self, topic: str, payload: str, qos: int = 0) -> None:
         """
         Publish data to an MQTT topic.
 
@@ -141,7 +141,7 @@ class Mqtt:
             payload (str): The payload to publish.
         """
         logger.debug("Publish: %s : %s", topic, payload)
-        self.mqttClient.publish(topic, payload)
+        self.mqttClient.publish(topic, payload, qos)
 
     def publishOnChange(self, topic: str, payload: str, forceUpdateMs: int = 60000) -> None:
         """

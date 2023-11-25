@@ -8,8 +8,12 @@ from typing import Dict
 class JsonUtil:
 
     @staticmethod
-    def obj2Json(obj: any) -> str:
+    def obj2Json(obj: dict) -> str:
         return json.dumps(obj, ensure_ascii=False, indent=4)
+
+    @staticmethod
+    def json2Obj(jsonStr: str) -> dict:
+        return json.loads(jsonStr)
 
     @staticmethod
     def loadJson(path: pathlib.PurePath) -> Dict:
@@ -32,7 +36,7 @@ class JsonUtil:
         return json_data
 
     @staticmethod
-    def saveJson(path: pathlib.PurePath, object: Dict) -> None:
+    def saveJson(path: pathlib.PurePath, obj: dict) -> None:
         """
         This function saves a dictionary object as a JSON file at a specified path.
 
@@ -50,4 +54,4 @@ class JsonUtil:
             # 'json.dump' method is used to write the dictionary object to the file.
             # 'ensure_ascii' parameter is set to False to ensure that the file can store non-ASCII characters.
             # 'indent' parameter is set to 4 to pretty print the JSON with 4 spaces indentation.
-            json.dump(object, f, ensure_ascii=False, indent=4)
+            json.dump(obj, f, ensure_ascii=False, indent=4)
