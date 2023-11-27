@@ -178,6 +178,11 @@ class Scheduler:
         """Returns the current time in milliseconds."""
         return int(oldTime.time() * 1000)
 
+    @staticmethod
+    def getSeconds() -> int:
+        """Returns the current time in seconds."""
+        return int(oldTime.time())
+
     def getTaskSize(self) -> int:
         """Returns the number of tasks in the task list."""
         return len(self.relMsTaskList) + len(self.absDateTaskList) + len(self.absTimeTaskList)
