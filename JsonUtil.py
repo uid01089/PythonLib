@@ -16,7 +16,7 @@ class JsonUtil:
         return json.loads(jsonStr)
 
     @staticmethod
-    def loadJson(path: pathlib.PurePath) -> Dict:
+    def loadJson(path: pathlib.PurePath, defaultObj: dict = None) -> Dict:
         """
         This function loads a JSON file from a specified path and returns it as a dictionary.
 
@@ -28,9 +28,13 @@ class JsonUtil:
         """
 
         # Open the file in read mode.
-        with open(path, 'r') as json_file:
-            # Use 'json.load' to load the file content into a dictionary.
-            json_data = json.load(json_file)
+        try:
+            with open(path, 'r') as json_file:
+                # Use 'json.load' to load the file content into a dictionary.
+                json_data = json.load(json_file)
+
+        except FileNotFoundError:
+            json_data = defaultObj
 
         # Return the dictionary.
         return json_data
