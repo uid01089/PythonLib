@@ -1,62 +1,66 @@
 import os
 import hashlib
-import pathlib
 import re
 import shutil
+import logging
 from re import Pattern
 from typing import Callable
+from pathlib import Path
 from PythonLib.Stream import Stream
 
+logger = logging.getLogger('FileOperations')
 
 # This class provides various file and directory operations.
+
+
 class FileOperations:
     @staticmethod
-    def _getPathsFilter(path: pathlib.PurePath, pattern: Pattern) -> bool:
+    def _getPathsFilter(path: Path, pattern: Pattern) -> bool:
         """
         Determine if a given path matches a regular expression pattern.
 
         Args:
-            path (pathlib.PurePath): The path to be checked.
+            path (Path): The path to be checked.
             pattern (Pattern): The regular expression pattern to match against.
 
         Returns:
             bool: True if the path matches the pattern, False otherwise.
         """
-        pathStr = path.__str__()
+        pathStr = path.as_posix()
         return pattern.match(pathStr)
 
     @staticmethod
-    def getPaths(dir: str, regex: str) -> list[pathlib.Path]:
+    def getPaths(directory: Path, regex: str) -> list[Path]:
         """
         Get a list of paths within a directory that match a regular expression pattern.
 
         Args:
-            dir (str): The directory to search for files in.
+            directory (Path): The directory to search for files in.
             regex (str): The regular expression pattern to match against.
 
         Returns:
-            list[pathlib.Path]: A list of pathlib.Path objects representing matching files.
+            list[Path]: A list of Path objects representing matching files.
         """
-        allFiles = []
         pattern = re.compile(regex, re.IGNORECASE | re.DOTALL)
 
-        for path, subdirs, files in os.walk(dir):
-            for name in files:
-                allFiles.append(pathlib.PurePath(path, name))
+        allFiles = []
+        for file in directory.rglob('*'):
+            if file.is_file():
+                allFiles.append(file)
 
         allFilesFiltered = Stream(allFiles) \
             .filter(lambda path: FileOperations._getPathsFilter(path, pattern)) \
-            .map(pathlib.Path) \
+            .map(Path) \
             .collectToSet()
         return allFilesFiltered
 
     @staticmethod
-    def getSize(path: pathlib.PurePath) -> int:
+    def getSize(path: Path) -> int:
         """
         Get the size of a file.
 
         Args:
-            path (pathlib.PurePath): The path to the file.
+            path (Path): The path to the file.
 
         Returns:
             int: The size of the file in bytes.
@@ -64,12 +68,12 @@ class FileOperations:
         return path.stat().st_size
 
     @staticmethod
-    def getHash(path: pathlib.PurePath) -> str:
+    def getHash(path: Path) -> str:
         """
         Get the SHA3-256 hash of a file.
 
         Args:
-            path (pathlib.PurePath): The path to the file.
+            path (Path): The path to the file.
 
         Returns:
             str: The hexadecimal representation of the file's hash.
@@ -86,18 +90,18 @@ class FileOperations:
         return m.hexdigest()
 
     @staticmethod
-    def getCwd() -> pathlib.Path:
+    def getCwd() -> Path:
         """
         Get the current working directory.
 
         Returns:
-            pathlib.Path: The current working directory as a pathlib.Path object.
+            Path: The current working directory as a Path object.
         """
-        return pathlib.Path(os.getcwd())
+        return Path(os.getcwd())
 
     @staticmethod
-    def treeWalker(startPath: pathlib.PurePath, fileVisitor: Callable[[pathlib.PurePath], None],
-                   dirVisitor: Callable[[pathlib.PurePath], None], dirLeaver: Callable[[pathlib.PurePath], None]) -> None:
+    def treeWalker(startPath: Path, fileVisitor: Callable[[Path], None],
+                   dirVisitor: Callable[[Path], None], dirLeaver: Callable[[Path], None]) -> None:
 
         # Call DirVisitor at first
         if dirVisitor:
@@ -107,7 +111,7 @@ class FileOperations:
         directories = []
 
         for dirElement in os.listdir(startPath):
-            path = pathlib.Path(startPath, dirElement)
+            path = Path(startPath, dirElement)
             if path.is_file():
                 files.append(path)
             else:
@@ -126,33 +130,54 @@ class FileOperations:
             dirLeaver(startPath)
 
     @staticmethod
-    def copyFile(source: pathlib.PurePath, target: pathlib.PurePath) -> None:
+    def copyFile(source: Path, target: Path) -> None:
         """
         Copy a file from the source path to the target path.
 
         Args:
-            source (pathlib.PurePath): The source file path.
-            target (pathlib.PurePath): The target file path.
+            source (Path): The source file path.
+            target (Path): The target file path.
         """
         shutil.copy(source, target)
 
     @staticmethod
-    def copyDir(sourceDir: pathlib.PurePath, targetDir: pathlib.PurePath) -> None:
+    def copyDir(sourceDir: Path, targetDir: Path) -> None:
         """
         Copy a directory and its contents from the source path to the target path.
 
         Args:
-            sourceDir (pathlib.PurePath): The source directory path.
-            targetDir (pathlib.PurePath): The target directory path.
+            sourceDir (Path): The source directory path.
+            targetDir (Path): The target directory path.
         """
         shutil.copytree(sourceDir, targetDir)
 
     @staticmethod
-    def delTree(directory: pathlib.PurePath) -> None:
+    def delTree(directory: Path) -> None:
         """
         Recursively delete a directory and its contents.
 
         Args:
-            directory (pathlib.PurePath): The directory to be deleted.
+            directory (Path): The directory to be deleted.
         """
         shutil.rmtree(directory)
+
+    @staticmethod
+    def isChild(parentDirectory: Path, childDirectory: Path) -> bool:
+        """_summary_
+
+        Args:
+            parentDirectory (Path): parent directory
+            childDirectory (Path): child directory
+
+        Returns:
+            bool: returns if child is really a child of parent
+        """
+
+        return childDirectory.as_posix().startswith(parentDirectory.as_posix())
+
+    @staticmethod
+    def as_cygwin(path: Path) -> Path:
+        cygwinPath = path.as_posix()
+        if path.drive:
+            cygwinPath = cygwinPath.replace(f"{path.drive}", f"/cygdrive/{path.drive[0].lower()}")
+        return Path(cygwinPath)
