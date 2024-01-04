@@ -44,7 +44,7 @@ class MikrotikRouter:
 
         r = self.router.talk('/ip/neighbor/print')
         for neighbor in r:
-            if neighbor['platform'] == 'MikroTik':
+            if neighbor['platform'] == 'MikroTik' and neighbor['interface'] == 'vlan30_Parents':
                 neighbors.append(MikrotikRouter(neighbor['address'], self.user, self.password))
 
         return neighbors
