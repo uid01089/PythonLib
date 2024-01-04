@@ -6,7 +6,7 @@ from PythonLib.JsonUtil import JsonUtil
 from PythonLib.Mqtt import Mqtt
 
 
-logger = logging.getLogger('MqttConfigContainer')
+logger = logging.getLogger('PythonLib.MqttConfigContainer')
 
 
 class MqttConfigContainer:
