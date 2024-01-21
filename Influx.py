@@ -47,17 +47,20 @@ class Influx:
 
     def write(self, measurement: str, fields: dict, retentionPolicy: str = None) -> Influx:
 
-        if len(fields) != 0:
-            json_body = [
-                {
-                    "measurement": measurement,
-                    "tags": {
-                    },
-                    "fields": fields
-                }
-            ]
+        try:
+            if len(fields) != 0:
+                json_body = [
+                    {
+                        "measurement": measurement,
+                        "tags": {
+                        },
+                        "fields": fields
+                    }
+                ]
 
-            self.client.write_points(json_body, retention_policy=retentionPolicy)
+                self.client.write_points(json_body, retention_policy=retentionPolicy)
+        except BaseException:
+            logging.exception('_1_')
 
         return self
 
