@@ -48,7 +48,7 @@ class MqttConfigContainer:
         for callback in self.subscriber:
             callback(self.config)
 
-    def __configReceived(self, configAsJsonStr: str) -> None:
+    def __configReceived(self, topic: str, configAsJsonStr: str) -> None:
         try:
             self.config = JsonUtil.json2Obj(configAsJsonStr)
 
