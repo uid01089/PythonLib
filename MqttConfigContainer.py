@@ -1,7 +1,7 @@
 from json import JSONDecodeError
 import logging
 import pathlib
-from typing import Callable
+from typing import Callable, List
 from PythonLib.JsonUtil import JsonUtil
 from PythonLib.Mqtt import Mqtt
 
@@ -15,7 +15,7 @@ class MqttConfigContainer:
         self.configTopic = configTopic
         self.path = path
         self.config = {} if defaultConfig is None else defaultConfig
-        self.subscriber = []
+        self.subscriber: List[Callable[[dict], None]] = []
 
     def setup(self) -> None:
         # Load config file if existing
@@ -49,6 +49,9 @@ class MqttConfigContainer:
             callback(self.config)
 
     def __configReceived(self, topic: str, configAsJsonStr: str) -> None:
+
+        logging.debug("Received Config, which is shall be stored")
+
         try:
             self.config = JsonUtil.json2Obj(configAsJsonStr)
 
