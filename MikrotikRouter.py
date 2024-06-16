@@ -1,8 +1,11 @@
 
 from __future__ import annotations
+import logging
+from typing import List
 
 import ros_api
 
+logger = logging.getLogger('MikrotikRouter.Mqtt')
 
 class MikrotikRouter:
     """
@@ -22,11 +25,11 @@ class MikrotikRouter:
         self.password = passwd
         self.router = ros_api.Api(ipAddr, user=user, password=passwd)
 
-    def getListOfInterfaces(self) -> list[dict]:
+    def getListOfInterfaces(self) -> List[dict]:
         r = self.router.talk('/interface/print')
         return r
 
-    def getSystemResources(self) -> list[dict]:
+    def getSystemResources(self) -> List[dict]:
         r = self.router.talk('/system/resource/print')
         return r
 
@@ -34,28 +37,33 @@ class MikrotikRouter:
         r = self.router.talk(f'/interface/monitor-traffic\n=interface={interfaceName}\n=once=')
         return r
 
-    def getNeighbors(self) -> list[MikrotikRouter]:
+    def getNeighbors(self) -> List[MikrotikRouter]:
         """
         Retrieves a list of neighboring Mikrotik routers.
 
         :return: A list of MikrotikRouter objects
         """
-        neighbors = []
+        neighbors : List[MikrotikRouter] = []
 
         r = self.router.talk('/ip/neighbor/print')
         for neighbor in r:
             if neighbor['platform'] == 'MikroTik' and neighbor['interface'] == 'vlan30_Parents':
-                neighbors.append(MikrotikRouter(neighbor['address'], self.user, self.password))
+                try:                
+                    mikroTikRouter = MikrotikRouter(neighbor['address'], self.user, self.password)
+                    neighbors.append(mikroTikRouter)
+
+                except BaseException:
+                    logging.exception("Error in setting up Router: %s", neighbor['address'])
 
         return neighbors
 
-    def getLeases(self) -> list[dict]:
+    def getLeases(self) -> List[dict]:
         """
         Retrieves a list of DHCP leases.
 
         :return: A list of dictionary objects representing leases
         """
-        leases = []
+        leases : List[dict] = []
 
         r = self.router.talk('/ip/dhcp-server/lease/print')
         for lease in r:
@@ -64,7 +72,7 @@ class MikrotikRouter:
 
         return leases
 
-    def getDns(self) -> list[dict]:
+    def getDns(self) -> List[dict]:
         """
         Retrieves a list of DNS static entries.
 
@@ -73,7 +81,7 @@ class MikrotikRouter:
         r = self.router.talk('/ip/dns/static/print')
         return r
 
-    def getWiFiRegistrationTable(self) -> list[dict]:
+    def getWiFiRegistrationTable(self) -> List[dict]:
         """
         Retrieves the WiFi registration table.
 
@@ -91,7 +99,7 @@ class MikrotikRouter:
         r = self.router.talk('/system/identity/print')
         return r[0]['name']
 
-    def getActivities(self) -> list[dict]:
+    def getActivities(self) -> List[dict]:
         """
         Retrieves a list of kid-control device activities.
 
