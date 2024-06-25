@@ -100,6 +100,17 @@ class FileOperations:
         return Path(os.getcwd())
 
     @staticmethod
+    def getFilesAndDirectories(path: Path) -> tuple[list[Path], list[Path]]:
+        files = []
+        directories = []
+        for path in path.iterdir():
+            if path.is_file():
+                files.append(path)
+            else:
+                directories.append(path)
+        return (files, directories)
+
+    @staticmethod
     def treeWalker(startPath: Path, fileVisitor: Callable[[Path], None],
                    dirVisitor: Callable[[Path], None], dirLeaver: Callable[[Path], None]) -> None:
 
@@ -107,11 +118,9 @@ class FileOperations:
         if dirVisitor:
             dirVisitor(startPath)
 
-        files = []
-        directories = []
+        (files, directories) = FileOperations.getFilesAndDirectories(startPath)
 
-        for dirElement in os.listdir(startPath):
-            path = Path(startPath, dirElement)
+        for path in startPath.iterdir():
             if path.is_file():
                 files.append(path)
             else:
@@ -123,7 +132,8 @@ class FileOperations:
 
         # Call all file visitors
         for file in files:
-            fileVisitor(file)
+            if fileVisitor:
+                fileVisitor(file)
 
         # Call dirLeaver
         if dirLeaver:
@@ -181,3 +191,11 @@ class FileOperations:
         if path.drive:
             cygwinPath = cygwinPath.replace(f"{path.drive}", f"/cygdrive/{path.drive[0].lower()}")
         return Path(cygwinPath)
+
+    @staticmethod
+    def getAllFilesOfAnDirectory(directory_path: Path):
+        return [path for path in directory_path.iterdir() if path.is_file()]
+
+    @staticmethod
+    def getAllDirsOfAnDirectory(directory_path: Path):
+        return [path for path in directory_path.iterdir() if path.is_dir()]
