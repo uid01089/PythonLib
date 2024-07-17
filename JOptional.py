@@ -6,7 +6,7 @@ T = TypeVar('T')
 U = TypeVar('U')
 
 
-class Optional(Generic[T]):
+class JOptional(Generic[T]):
     def __init__(self, value: Union[T, None]):
         self._value = value
 
@@ -25,10 +25,10 @@ class Optional(Generic[T]):
         if self._value is not None:
             consumer(self._value)
 
-    def map(self, mapper: Callable[[T], U]) -> 'Optional[U]':
+    def map(self, mapper: Callable[[T], U]) -> 'JOptional[U]':
         if self._value is not None:
-            return Optional(mapper(self._value))
-        return Optional(None)
+            return JOptional(mapper(self._value))
+        return JOptional(None)
 
     def toStream(self) -> Stream[T]:
         """

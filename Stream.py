@@ -1,5 +1,6 @@
 from __future__ import annotations
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from types import NoneType
 from typing import Callable, Generic, TypeVar, List, Set, Union, Generator, Any, Iterable
 import multiprocessing
 
@@ -33,10 +34,11 @@ class Stream(Generic[T]):
         Returns:
             Stream[R]: A new Stream with the modified data.
         """
-        if self.data:
-            self.data = list(map(f, self.data))
-        else:
-            self.data = []
+        self.data = list(map(f, self.data))
+
+        # Remove all None and NoneTypes from collection
+        self.filter(lambda value: value is not None and not isinstance(value, NoneType))
+
         return self
 
     def mapP(self, f: Callable[[T], R]) -> Stream[R]:
@@ -55,6 +57,10 @@ class Stream(Generic[T]):
             res = list(e.map(f, self.data, timeout=None, chunksize=chunkSize))
 
         self.data = res
+
+        # Remove all None and NoneTypes from collection
+        self.filter(lambda value: value is not None and not isinstance(value, NoneType))
+
         return self
 
     def filter(self, f: Callable[[T], bool]) -> Stream[T]:
