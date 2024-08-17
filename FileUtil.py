@@ -32,23 +32,36 @@ class FileOperations:
         return bool(pattern.match(pathStr))
 
     @staticmethod
+    def getAllFilesNested(directory: Path) -> List[Path]:
+        """
+        Get a list of file-paths within a directory and nested elements.
+
+        Args:
+            directory (Path): The directory to search for files in.
+
+        Returns:
+            List[Path]: A list of Path objects for all files.
+        """
+        allFiles: List[Path] = []
+        for file in directory.rglob('*'):
+            if file.is_file():
+                allFiles.append(file)
+        return allFiles
+
+    @staticmethod
     def getPaths(directory: Path, regex: str) -> List[Path]:
         """
         Get a list of paths within a directory that match a regular expression pattern.
 
         Args:
             directory (Path): The directory to search for files in.
-            regex (str): The regular expression pattern to match against.
+            regex (str): The regular expression pattern to match against (with re.IGNORECASE | re.DOTALL).
 
         Returns:
             List[Path]: A list of Path objects representing matching files.
         """
         pattern = re.compile(regex, re.IGNORECASE | re.DOTALL)
-        allFiles: List[Path] = []
-
-        for file in directory.rglob('*'):
-            if file.is_file():
-                allFiles.append(file)
+        allFiles: List[Path] = FileOperations.getAllFilesNested(directory)
 
         allFilesFiltered = Stream(allFiles) \
             .filter(lambda path: FileOperations._getPathsFilter(path, pattern)) \
