@@ -3,7 +3,7 @@ from typing import List
 
 # Precompile regular expression patterns for number and indentation matching
 numberPattern = re.compile(r'^[-+]?(?:\d+(\.\d*)?|\.\d+)$')
-indentPattern = re.compile(r'^\s+', re.MULTILINE)
+indentPattern = re.compile(r'^[ \t]+', re.MULTILINE)
 
 
 class StringUtil:
