@@ -18,9 +18,9 @@ class StringUtil:
     def isBoolean(string: str) -> any:
         state = None
 
-        if string.lower() in ('true', 'on', '1'):
+        if string.lower() in ('true', 'on', '1', 'yes'):
             state = True
-        elif string.lower() in ('false', 'off', '0'):
+        elif string.lower() in ('false', 'off', '0', 'no'):
             state = False
 
         return state
