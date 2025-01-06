@@ -7,6 +7,7 @@ import ros_api
 
 logger = logging.getLogger('MikrotikRouter.Mqtt')
 
+
 class MikrotikRouter:
     """
     This class represents a Mikrotik Router and provides methods to retrieve
@@ -43,12 +44,12 @@ class MikrotikRouter:
 
         :return: A list of MikrotikRouter objects
         """
-        neighbors : List[MikrotikRouter] = []
+        neighbors: List[MikrotikRouter] = []
 
         r = self.router.talk('/ip/neighbor/print')
         for neighbor in r:
-            if neighbor['platform'] == 'MikroTik' and neighbor['interface'] == 'vlan30_Parents':
-                try:                
+            if neighbor['platform'] == 'MikroTik':
+                try:
                     mikroTikRouter = MikrotikRouter(neighbor['address'], self.user, self.password)
                     neighbors.append(mikroTikRouter)
 
@@ -63,7 +64,7 @@ class MikrotikRouter:
 
         :return: A list of dictionary objects representing leases
         """
-        leases : List[dict] = []
+        leases: List[dict] = []
 
         r = self.router.talk('/ip/dhcp-server/lease/print')
         for lease in r:
