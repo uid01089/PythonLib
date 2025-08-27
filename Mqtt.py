@@ -76,7 +76,7 @@ class Mqtt:
             callback = self.topicCallbackDict.get(topic)
             if callback:
                 try:
-                    callback(payload)
+                    callback(topic, payload)
                 except BaseException:
                     logging.exception('_3_')
             else:
@@ -175,24 +175,24 @@ class Mqtt:
                 self.onChangeDictStartTime[topic] = Scheduler.getMillis()
                 self.publishIndependentTopic(topic, payload)
 
-    def subscribe(self, topic: str, callback: Callable[[str], None]) -> None:
+    def subscribe(self, topic: str, callback: Callable[[str, str], None]) -> None:
         """
         Subscribe to an MQTT topic and specify a callback function to handle incoming messages.
 
         Args:
             topic (str): The topic to subscribe to (rootTopic/topic)
-            callback (Callable[[str], None]): A callback function that accepts the message payload.
+            callback (Callable[[str, str], None]): A callback function that accepts the topic and message payload.
         """
         topic = self.rootTopic + "/" + topic
         self.subscribeIndependentTopic(topic, callback)
 
-    def subscribeIndependentTopic(self, topic: str, callback: Callable[[str], None]) -> None:
+    def subscribeIndependentTopic(self, topic: str, callback: Callable[[str, str], None]) -> None:
         """
         Subscribe to an MQTT topic and specify a callback function to handle incoming messages.
 
         Args:
             topic (str): The topic to subscribe to
-            callback (Callable[[str], None]): A callback function that accepts the message payload.
+            callback (Callable[[str, str], None]): A callback function that accepts the topic and message payload.
         """
 
         self.topicCallbackDict[topic] = callback

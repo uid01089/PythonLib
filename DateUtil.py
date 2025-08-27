@@ -15,3 +15,11 @@ class DateTimeUtilities:
         now = datetime.now()
         dt_string = now.strftime("%Y-%m-%d-%H-%M-%S")
         return dt_string
+
+    @staticmethod
+    def parseIsoStr(isoStr: str) -> datetime:
+        return datetime.fromisoformat(isoStr[:-1])
+
+    @staticmethod
+    def dateObj2IsoStr(date: datetime) -> datetime:
+        return date.isoformat() + 'Z'
