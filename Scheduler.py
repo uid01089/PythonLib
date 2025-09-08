@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, time
 import logging
 import time as oldTime
 
-logger = logging.getLogger('Scheduler')
+logger = logging.getLogger('PythonLib.Scheduler')
 
 
 class Task:
