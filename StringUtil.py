@@ -12,6 +12,19 @@ class StringUtil:
     """
 
     @staticmethod
+    def fromBooleanOnOff(state: bool) -> str:
+        """
+        Convert a boolean value to its corresponding "On" or "Off" string representation.
+
+        Args:
+            state (bool): The boolean value to convert.
+
+        Returns:
+            str: "On" if the state is True, "Off" if the state is False.
+        """
+        return "On" if state else "Off"
+    
+    @staticmethod
     def isNumber(string: str) -> bool:
         """
         Determine if the provided string represents a valid number.

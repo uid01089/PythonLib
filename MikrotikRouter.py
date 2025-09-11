@@ -1,12 +1,81 @@
 
 from __future__ import annotations
 import logging
-from typing import List
+from typing import List, TypedDict
 
 import ros_api
 
 logger = logging.getLogger('MikrotikRouter.Mqtt')
 
+
+class LeaseDict(TypedDict, total=False):
+    id: str  # '.id'
+    address: str
+    mac_address: str  # 'mac-address'
+    client_id: str  # 'client-id'
+    address_lists: str  # 'address-lists'
+    server: str
+    dhcp_option: str  # 'dhcp-option'
+    status: str
+    expires_after: str  # 'expires-after'
+    last_seen: str  # 'last-seen'
+    active_address: str  # 'active-address'
+    active_mac_address: str  # 'active-mac-address'
+    active_client_id: str  # 'active-client-id'
+    active_server: str  # 'active-server'
+    class_id: str  # 'class-id'
+    radius: str
+    dynamic: str
+    blocked: str
+    disabled: str
+    comment: str
+
+class ActivityDict(TypedDict, total=False):
+    id: str  # '.id'
+    name: str
+    mac_address: str  # 'mac-address'
+    user: str
+    dynamic: str
+    blocked: str
+    limited: str
+    inactive: str
+    disabled: str
+
+class WifiRegistrationDict(TypedDict, total=False):
+    id: str  # '.id'
+    interface: str
+    mac_address: str  # 'mac-address'
+    ap: str
+    wds: str
+    bridge: str
+    rx_rate: str  # 'rx-rate'
+    tx_rate: str  # 'tx-rate'
+    packets: str
+    bytes: str
+    frames: str
+    frame_bytes: str  # 'frame-bytes'
+    hw_frames: str  # 'hw-frames'
+    hw_frame_bytes: str  # 'hw-frame-bytes'
+    tx_frames_timed_out: str  # 'tx-frames-timed-out'
+    uptime: str
+    last_activity: str  # 'last-activity'
+    signal_strength: str  # 'signal-strength'
+    signal_to_noise: str  # 'signal-to-noise'
+    signal_strength_ch0: str  # 'signal-strength-ch0'
+    signal_strength_ch1: str  # 'signal-strength-ch1'
+    strength_at_rates: str
+    tx_ccq: str  # 'tx-ccq'
+    p_throughput: str  # 'p-throughput'
+    last_ip: str  # 'last-ip'
+    dot1x_port_enabled: str  # '802.1x-port-enabled'
+    authentication_type: str
+    encryption: str
+    group_encryption: str
+    management_protection: str
+    wmm_enabled: str
+    tx_rate_set: str    
+
+    
 
 class MikrotikRouter:
     """
@@ -58,13 +127,13 @@ class MikrotikRouter:
 
         return neighbors
 
-    def getLeases(self) -> List[dict]:
+    def getLeases(self) -> List[LeaseDict]:
         """
         Retrieves a list of DHCP leases.
 
         :return: A list of dictionary objects representing leases
         """
-        leases: List[dict] = []
+        leases: List[LeaseDict] = []
 
         r = self.router.talk('/ip/dhcp-server/lease/print')
         for lease in r:
@@ -82,7 +151,7 @@ class MikrotikRouter:
         r = self.router.talk('/ip/dns/static/print')
         return r
 
-    def getWiFiRegistrationTable(self) -> List[dict]:
+    def getWiFiRegistrationTable(self) -> List[WifiRegistrationDict]:
         """
         Retrieves the WiFi registration table.
 
@@ -100,7 +169,7 @@ class MikrotikRouter:
         r = self.router.talk('/system/identity/print')
         return r[0]['name']
 
-    def getActivities(self) -> List[dict]:
+    def getActivities(self) -> List[ActivityDict]:
         """
         Retrieves a list of kid-control device activities.
 
@@ -108,3 +177,12 @@ class MikrotikRouter:
         """
         r = self.router.talk('/ip/kid-control/device/print')
         return r
+    
+    def initActivitiesListCreation(self) -> None:
+        """
+        Initializes the activities list creation process.
+
+        :return: None
+        """
+        #self.router.talk('/ip kid-control device remove name=DummyDevice user=DummyUser')
+        #self.router.talk('/ip kid-control device add name=DummyDevice mac-address=FF:FF:FF:FF:FF:FF user=DummyUser')
