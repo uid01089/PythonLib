@@ -7,6 +7,63 @@ import ros_api
 
 logger = logging.getLogger('MikrotikRouter.Mqtt')
 
+class DnsDict(TypedDict, total=False):
+    id: str           # '.id'
+    name: str
+    address: str
+    ttl: str
+    dynamic: str
+    disabled: str
+    comment: str
+
+
+class SystemResourceDict(TypedDict, total=False):
+    uptime: str
+    version: str
+    build_time: str  # 'build-time'
+    factory_software: str  # 'factory-software'
+    free_memory: str  # 'free-memory'
+    total_memory: str  # 'total-memory'
+    cpu: str
+    cpu_count: str  # 'cpu-count'
+    cpu_frequency: str  # 'cpu-frequency'
+    cpu_load: str  # 'cpu-load'
+    free_hdd_space: str  # 'free-hdd-space'
+    total_hdd_space: str  # 'total-hdd-space'
+    write_sect_since_reboot: str  # 'write-sect-since-reboot'
+    write_sect_total: str  # 'write-sect-total'
+    bad_blocks: str  # 'bad-blocks'
+    architecture_name: str  # 'architecture-name'
+    board_name: str  # 'board-name'
+    platform: str
+
+class InterfaceDict(TypedDict, total=False):
+    id: str  # '.id'
+    name: str
+    default_name: str  # 'default-name'
+    type: str
+    mtu: str
+    actual_mtu: str  # 'actual-mtu'
+    l2mtu: str
+    max_l2mtu: str  # 'max-l2mtu'
+    mac_address: str  # 'mac-address'
+    link_downs: str  # 'link-downs'
+    rx_byte: str  # 'rx-byte'
+    tx_byte: str  # 'tx-byte'
+    rx_packet: str  # 'rx-packet'
+    tx_packet: str  # 'tx-packet'
+    rx_drop: str  # 'rx-drop'
+    tx_drop: str  # 'tx-drop'
+    tx_queue_drop: str  # 'tx-queue-drop'
+    rx_error: str  # 'rx-error'
+    tx_error: str  # 'tx-error'
+    fp_rx_byte: str  # 'fp-rx-byte'
+    fp_tx_byte: str  # 'fp-tx-byte'
+    fp_rx_packet: str  # 'fp-rx-packet'
+    fp_tx_packet: str  # 'fp-tx-packet'
+    running: str
+    slave: str
+    disabled: str
 
 class LeaseDict(TypedDict, total=False):
     id: str  # '.id'
@@ -75,7 +132,21 @@ class WifiRegistrationDict(TypedDict, total=False):
     wmm_enabled: str
     tx_rate_set: str    
 
-    
+class MonitorTrafficDict(TypedDict, total=False):
+    name: str
+    rx_packets_per_second: str  # 'rx-packets-per-second'
+    rx_bits_per_second: str     # 'rx-bits-per-second'
+    fp_rx_packets_per_second: str  # 'fp-rx-packets-per-second'
+    fp_rx_bits_per_second: str     # 'fp-rx-bits-per-second'
+    rx_drops_per_second: str
+    rx_errors_per_second: str
+    tx_packets_per_second: str
+    tx_bits_per_second: str
+    fp_tx_packets_per_second: str  # 'fp-tx-packets-per-second'
+    fp_tx_bits_per_second: str     # 'fp-tx-bits-per-second'
+    tx_drops_per_second: str
+    tx_queue_drops_per_second: str
+    tx_errors_per_second: str    
 
 class MikrotikRouter:
     """
@@ -95,15 +166,15 @@ class MikrotikRouter:
         self.password = passwd
         self.router = ros_api.Api(ipAddr, user=user, password=passwd)
 
-    def getListOfInterfaces(self) -> List[dict]:
+    def getListOfInterfaces(self) -> List[InterfaceDict]:
         r = self.router.talk('/interface/print')
         return r
 
-    def getSystemResources(self) -> List[dict]:
+    def getSystemResources(self) -> SystemResourceDict:
         r = self.router.talk('/system/resource/print')
-        return r
+        return r[0]
 
-    def getMonitorTraffic(self, interfaceName: str) -> dict:
+    def getMonitorTraffic(self, interfaceName: str) -> MonitorTrafficDict:
         r = self.router.talk(f'/interface/monitor-traffic\n=interface={interfaceName}\n=once=')
         return r
 
@@ -142,7 +213,7 @@ class MikrotikRouter:
 
         return leases
 
-    def getDns(self) -> List[dict]:
+    def getDns(self) -> List[DnsDict]:
         """
         Retrieves a list of DNS static entries.
 
